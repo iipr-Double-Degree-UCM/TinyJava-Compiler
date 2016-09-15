@@ -1,0 +1,392 @@
+package syntactic_analyzer;
+
+import java.util.*;
+import java_cup.runtime.Symbol;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import error_handle.Errors;
+import lexical_analyzer.LexicalAnalyzerTiny;
+import lexical_analyzer.LexicalUnit;
+import syntactic_analyzer.syntax.*;
+import syntactic_analyzer.syntax.Statement.*;
+import syntactic_analyzer.syntax.Expression.*;
+
+
+scan with {: return getScanner().next_token(); :};
+
+parser code {: 
+	LexicalAnalyzerTiny lexer;
+
+	public SyntacticAnalyzerTiny(LexicalAnalyzerTiny lexA, ComplexSymbolFactory sf) {
+		super(lexA, sf);
+		lexer = lexA;
+	}
+
+	/**
+	 * When a syntactic error is found, the lexer calls this method before trying
+	 * to recover from it.
+	 */
+	@Override
+	public void syntax_error(Symbol cur_token) {	
+		LexicalUnit s = (LexicalUnit) cur_token;
+		try {
+			throw new Errors(Errors.SYNTACTICERROR, "Syntax error: Unexpected symbol <" + s.getName() +
+					 "> at line " + s.getLeft().getLine() + ", column " + s.getLeft().getColumn());
+		} catch (Errors err) {
+			err.print();
+		}
+	}
+:};
+
+/*-----Reserved keywords regarding CLASSES-----*/
+terminal MAINKW, CLASSKW, NEWKW, PUBLICKW, PRIVATEKW, VOIDKW, RETURNKW; 
+
+/*-----Reserved keywords regarding STATEMENTS-----*/
+terminal WHILEKW, FORKW, IFKW, ELSEKW, SWITCHKW, CASEKW, ASSIGNSYM;
+
+/*-----Reserved keywords regarding TYPES-----*/
+terminal INTKW, DOUBLEKW, BOOLKW, CHARKW, STRINGKW;
+
+/*-----SOME SYMBOLS-----*/
+terminal OPENPAR, CLOSEPAR, OPENBRACE, CLOSEBRACE, OPENBRACKET, CLOSEBRACKET, DOT, COMMA, SEMICOLON;
+
+/*-----Symbols used for binary and unary RELATIONS-----*/
+terminal ADD, SUBS, MULT, DIV, MOD, DIST, EQ, NEG, LT, GT, LE, GE, AND, OR;
+
+/*-----Terminal STRINGS-----*/
+terminal String IDENTIFIER, CLASSNAMESTR, STRING;
+
+/*-----Terminal IDENTIFIERS-----*/
+non terminal Identifier ID, CLASSNAME;
+
+/*-----Terminal BOOLS-----*/
+terminal Boolean BOOLVAL;
+
+/*-----Terminal CHARS-----*/
+terminal char CHAR;
+
+/*-----Terminal INTEGER VALUE-----*/
+terminal Integer INT;
+
+/*-----Terminal DOUBLE VALUE-----*/
+terminal Double DOUBLE;
+
+/*-----Non-terminal FULL PROGRAM-----*/
+non terminal Program P;
+
+/*-----Non-terminal LIST OF DEFINED CLASSES-----*/
+non terminal List<MyClass> CLASSLIST;
+
+/*-----Non-terminal CLASS-----*/
+non terminal MyClass CLASSDEF;
+
+/*-----Non-terminal LIST OF ATTIBUTES OF A CLASS-----*/
+non terminal List<Attribute> ATTRIBLIST;
+
+/*-----Non-terminal ATTRIBUTE OF A CLASS-----*/
+non terminal Attribute ATTRIBDECL;
+
+/*-----Non-terminal LIST OF METHODS OF A CLASS-----*/
+/*---Note: The constructor also goes here. Only one constructor is allowed, placed 1st.---*/
+non terminal List<Method> METHLIST;
+
+/*-----Non-terminal METHOD AND UNIQUE CONSTRUCTOR OF A CLASS-----*/
+non terminal Method METHOD, CONSTRUCTOR;
+
+/*-----Non-terminal LIST OF STATEMENTS-----*/
+non terminal List<Statement> STMLIST;
+
+/*-----Non-terminal STATEMENTS-----*/
+non terminal Statement STM, DECL, NEWDECL, WHILE, IF_ELSE, FOR, SWITCH, VOIDMETHOBJ;
+
+/*-----Non-terminal ASSIGNMENT-----*/
+non terminal Assign ASSIGN;
+
+/*-----Non-terminal ASSIGNMENT OF AN ATTRIBUTE-----*/
+non terminal AttribObjectAssign ASSIGNATTRIB;
+
+/*-----Non-terminal ASSIGNMENT OF AN ARRAY-----*/
+non terminal ArrayAssign ASSIGNARRAY;
+
+/*-----Non-terminal LIST OF SWITCH STATEMENTS-----*/
+non terminal List<SwitchStatement> SWITCHBODY;
+
+/*-----Non-terminal SWITCH STATEMENTS-----*/
+non terminal SwitchStatement SWITCHSTM;
+
+/*-----Non-terminal EXPRESSIONS-----*/
+non terminal Expression EXPR, EXPRAND, EXPREQ, EXPRREL, EXPRADD, EXPRMULT, EXPRUNARY, EXPRLAST, METHOBJ;
+
+/*-----Non-terminal ELEMENT OF AN ARRAY-----*/
+non terminal ArrayElement ARRAYELEM;
+
+/*-----Non-terminal ATTRIBUTE OF AN OBJECT-----*/
+non terminal AttribObject ATTRIBOBJ;
+
+/*-----Non-terminal LIST OF PARAMETERS OF A METHOD-----*/
+non terminal List<Parameter> MPARAMS, MPARAMSLIST;
+
+/*-----Non-terminal PARAMETER OF A METHOD-----*/
+non terminal Parameter MPARAM;
+
+/*-----Non-terminal LIST PF EXPRESSIONS (for method calls)-----*/
+non terminal List<Expression> EXPRLIST;
+
+/*-----Non-terminal BASIC TYPES-----*/
+non terminal Integer BASICTYPE;
+
+/*-----Non-terminal ARRAY DECLARATION-----*/
+non terminal Statement ARRAYDECL;
+
+	
+P ::= CLASSLIST:cl MAINKW OPENBRACE STMLIST:sl CLOSEBRACE		
+		{: RESULT = Program.buildProgram(cl, sl); :}
+	| MAINKW OPENBRACE STMLIST:sl CLOSEBRACE					
+		{: RESULT = Program.buildProgram(null, sl); :}
+	;
+
+CLASSLIST ::= CLASSLIST:cl CLASSDEF:c		
+				{: cl.add(c); RESULT = cl; :}
+	| CLASSDEF:c						
+		{: List<MyClass> cl = new ArrayList<MyClass>(); cl.add(c); RESULT = cl; :}
+	;
+
+CLASSDEF ::= CLASSKW CLASSNAME:n OPENBRACE ATTRIBLIST:al METHLIST:ml CLOSEBRACE	
+				{: RESULT = MyClass.buildClass(n, al, ml); :}
+	| CLASSKW CLASSNAME:n OPENBRACE METHLIST:ml ATTRIBLIST:al CLOSEBRACE			
+		{: RESULT = MyClass.buildClass(n, al, ml); :}
+	;
+	
+ATTRIBLIST ::= ATTRIBLIST:al ATTRIBDECL:a SEMICOLON	
+				{: al.add(a); RESULT = al; :}
+	| ATTRIBDECL:a SEMICOLON						
+		{: List<Attribute> al = new ArrayList<Attribute>(); al.add(a); RESULT = al; :}
+	;
+	
+ATTRIBDECL ::= PUBLICKW BASICTYPE:t ID:i		
+				{: RESULT = Attribute.buildAttribute(txleft, ixright, true, t, i); :}
+	| PRIVATEKW BASICTYPE:t ID:i		
+		{: RESULT = Attribute.buildAttribute(txleft, ixright, false, t, i); :}
+	;	
+	
+ATTRIBOBJ ::= ID:i DOT ID:el
+				{: RESULT = new AttribObject(ixleft, elxright, i, el); :}
+	;
+
+METHLIST ::= METHLIST:ml METHOD:m				
+				{: ml.add(m); RESULT = ml; :}
+	| CONSTRUCTOR:c									
+		{: List<Method> ml = new ArrayList<Method>(); ml.add(c); RESULT = ml; :}
+	;
+	
+CONSTRUCTOR ::= PUBLICKW CLASSNAME:i MPARAMS:pl OPENBRACE STMLIST:s CLOSEBRACE 	
+			{: RESULT = Constructor.buildConstructor(i, pl, s); :}
+	;
+
+METHOD ::= PUBLICKW BASICTYPE:t ID:i MPARAMS:pl OPENBRACE STMLIST:s RETURNKW EXPR:e SEMICOLON CLOSEBRACE 	
+			{: RESULT = Method.buildMethod(true, t, i, pl, s, e); :}		
+	| PUBLICKW BASICTYPE:t ID:i MPARAMS:pl OPENBRACE RETURNKW EXPR:e SEMICOLON CLOSEBRACE					
+		{: RESULT = Method.buildMethod(true, t, i, pl, new ArrayList<Statement>(), e);   :}
+	| PRIVATEKW BASICTYPE:t ID:i MPARAMS:pl OPENBRACE STMLIST:s RETURNKW EXPR:e SEMICOLON CLOSEBRACE 		
+		{: RESULT = Method.buildMethod(false, t, i, pl, s, e); :}		
+	| PRIVATEKW BASICTYPE:t ID:i MPARAMS:pl OPENBRACE RETURNKW EXPR:e SEMICOLON CLOSEBRACE					
+		{: RESULT = Method.buildMethod(false, t, i, pl, new ArrayList<Statement>(), e);   :}
+	| PUBLICKW VOIDKW ID:i MPARAMS:pl OPENBRACE STMLIST:s CLOSEBRACE 		
+		{: RESULT = VoidMethod.buildVoidMethod(true, i, pl, s); :}		
+	| PRIVATEKW VOIDKW ID:i MPARAMS:pl OPENBRACE STMLIST:s CLOSEBRACE		
+		{: RESULT = VoidMethod.buildVoidMethod(false, i, pl, s);   :}
+	;
+	
+MPARAMS ::= OPENPAR MPARAMSLIST:pl CLOSEPAR			{: RESULT = pl;	:}
+	| OPENPAR CLOSEPAR								{: RESULT = new ArrayList<Parameter>();	:}
+	;
+	
+MPARAMSLIST ::= MPARAMSLIST:pl COMMA MPARAM:p 	
+				{: pl.add(p); RESULT = pl;	:}
+	| MPARAM:p									
+		{: List<Parameter> pl = new ArrayList<Parameter>(); pl.add(p); RESULT = pl; :}		
+	;
+	
+MPARAM ::= BASICTYPE:t ID:i				{: RESULT = new Parameter(t, i);	:}
+	; 
+
+STMLIST ::= STMLIST:sl STM:s					
+			{: sl.add(s); RESULT = sl; :}
+	| STM:s 									
+		{: List<Statement> sl = new ArrayList<Statement>(); sl.add(s); RESULT = sl; :}
+	;
+
+STM ::= NEWDECL:s SEMICOLON						{: RESULT = s; :}
+	| DECL:s SEMICOLON							{: RESULT = s; :}
+	| ASSIGN:s SEMICOLON 						{: RESULT = s; :}
+	| ASSIGNATTRIB:s SEMICOLON 					{: RESULT = s; :}
+	| ASSIGNARRAY:s SEMICOLON 					{: RESULT = s; :}
+	| WHILE:s 									{: RESULT = s; :}
+	| FOR:s 									{: RESULT = s; :}
+	| SWITCH:s 									{: RESULT = s; :}
+	| IF_ELSE:s 								{: RESULT = s; :}
+	| VOIDMETHOBJ:s SEMICOLON					{: RESULT = s; :}
+	| ARRAYDECL:s SEMICOLON						{: RESULT = s; :}
+	;
+	
+NEWDECL ::= CLASSNAME:c1 ID:i ASSIGNSYM NEWKW CLASSNAME:c2 OPENPAR EXPRLIST:el CLOSEPAR	
+			{: RESULT = new ObjectDeclaration(c1xleft, elxright, c1, i, c2, el); :}
+	;
+
+DECL ::= BASICTYPE:t ID:i					
+		{: RESULT = VariableDeclaration.variableDeclarationNoAssign(txleft, ixright, t, i); :}
+	| BASICTYPE:t ID:i ASSIGNSYM EXPR:e 	
+		{: RESULT = VariableDeclaration.variableDeclarationWithAssign(txleft, exright, t, i, e); :}
+	;
+	
+ASSIGN ::= ID:i ASSIGNSYM EXPR:e			
+		{: RESULT = new Assign(ixleft, exright, i, e); :}
+	;
+	
+ASSIGNATTRIB ::= ATTRIBOBJ:a ASSIGNSYM EXPR:e					
+		{: RESULT = new AttribObjectAssign(axleft, exright, a, e); :}
+	;
+	
+ASSIGNARRAY ::= ARRAYELEM:ae ASSIGNSYM EXPR:e					
+		{: RESULT = new ArrayAssign(aexleft, exright, ae, e); :}
+	;
+	
+ARRAYELEM ::= ID:i OPENBRACKET EXPR:e CLOSEBRACKET
+		{: RESULT = new ArrayElement(ixleft, exright, i, e); :}
+	;
+
+ARRAYDECL ::= BASICTYPE:t1 OPENBRACKET CLOSEBRACKET ID:i ASSIGNSYM NEWKW BASICTYPE:t2 OPENBRACKET INT:n CLOSEBRACKET			
+				{: RESULT = new ArrayDeclaration(t1xleft, nxright, i, t1, t2, n); :}
+	;
+	
+BASICTYPE ::= INTKW		 {: RESULT = ConstantValues.INTKW; :}
+	| BOOLKW 			 {: RESULT = ConstantValues.BOOLKW; :}
+	| DOUBLEKW			 {: RESULT = ConstantValues.DOUBLEKW; :}
+	| CHARKW			 {: RESULT = ConstantValues.CHARKW; :}
+	| STRINGKW			 {: RESULT = ConstantValues.STRINGKW; :}
+	;
+	
+WHILE ::= WHILEKW EXPR:c OPENBRACE STMLIST:s CLOSEBRACE		
+			{: RESULT = new While(cxleft, sxright, c, s); :}
+	;
+
+IF_ELSE ::= IFKW  EXPR:e OPENBRACE STMLIST:s1 CLOSEBRACE ELSEKW OPENBRACE STMLIST:s2 CLOSEBRACE	
+			{: RESULT = new IfElse(exleft, s2xright, e, s1, s2); :}
+		| IFKW  EXPR:e OPENBRACE STMLIST:s CLOSEBRACE 											
+			{: RESULT = new If(exleft, sxright, e, s); :}
+	;
+
+FOR ::= FORKW OPENPAR ASSIGN:a1 SEMICOLON EXPR:e SEMICOLON ASSIGN:a2 CLOSEPAR OPENBRACE STMLIST:s CLOSEBRACE	
+		{: RESULT = new For(a1xleft, sxright, a1, e, a2, s); :}
+	;
+
+
+SWITCH ::= SWITCHKW EXPR:e OPENBRACE SWITCHBODY:sb CLOSEBRACE	
+			{: RESULT = new Switch(exleft, sbxright, e, sb); :}
+	;
+	
+SWITCHBODY ::= SWITCHBODY:sb SWITCHSTM:s 							
+				{: sb.add(s); RESULT = sb; :}
+	| SWITCHSTM:s											
+		{: List<SwitchStatement> sb = new ArrayList<SwitchStatement>(); sb.add(s); RESULT = sb; :}
+	;
+
+SWITCHSTM ::= CASEKW INT:n OPENBRACE STMLIST:sl CLOSEBRACE	
+				{: RESULT = new SwitchStatement(nxleft, slxright, n, sl); :}
+	;
+
+VOIDMETHOBJ ::= ID:o DOT ID:m OPENPAR EXPRLIST:el CLOSEPAR 
+				{: RESULT = VoidMethCall.CallWithParams(oxleft, elxright, o, m, el); :}
+	| ID:o DOT ID:m OPENPAR CLOSEPAR
+		{: RESULT = VoidMethCall.CallNoParams(oxleft, mxright, o, m); :}
+	;
+	
+EXPRLIST ::= EXPRLIST:el COMMA EXPR:e
+				{: el.add(e); RESULT = el; :}
+	| EXPR:e												
+		{: List<Expression> el = new ArrayList<Expression>(); el.add(e); RESULT = el; :}
+	;
+	
+METHOBJ ::= ID:o DOT ID:m OPENPAR EXPRLIST:el CLOSEPAR 
+				{: RESULT = MethodCall.CallWithParams(oxleft, elxright, o, m, el); :}
+	| ID:o DOT ID:m OPENPAR CLOSEPAR
+		{: RESULT = MethodCall.CallNoParams(oxleft, mxright, o, m); :}
+	;
+
+EXPR ::= EXPR:e0 OR EXPRAND:e1 				
+		{: RESULT = new BinExpression(e0xleft, e1xright, e0, ConstantValues.OR, e1); :}
+	| EXPRAND:e1 							
+		{: RESULT = e1; :}
+	;
+	
+EXPRAND ::= EXPRAND:e1 AND EXPREQ:e2 			
+		{: RESULT = new BinExpression(e1xleft, e2xright, e1, ConstantValues.AND, e2); :}
+	| EXPREQ:e2						
+		{: RESULT = e2; :}
+	;
+	
+EXPREQ ::= EXPREQ:e2 EQ EXPRREL:e3 				
+		{: RESULT = new BinExpression(e2xleft, e3xright, e2, ConstantValues.EQ, e3); :}
+	| EXPREQ:e2 DIST EXPRREL:e3 		
+		{: RESULT = new BinExpression(e2xleft, e3xright, e2, ConstantValues.DIST, e3); :}
+	| EXPRREL:e3 						
+		{: RESULT = e3; :}
+	;
+	
+EXPRREL ::= EXPRREL:e3 LT EXPRADD:e4 		
+			{: RESULT = new BinExpression(e3xleft, e4xright, e3 ,ConstantValues.LT, e4); :}
+	| EXPRREL:e3 GT EXPRADD:e4 			
+		{: RESULT = new BinExpression(e3xleft, e4xright, e3, ConstantValues.GT, e4); :}
+	| EXPRREL:e3 LE EXPRADD:e4			
+		{: RESULT = new BinExpression(e3xleft, e4xright, e3, ConstantValues.LE, e4); :}
+	| EXPRREL:e3 GE EXPRADD:e4			
+		{: RESULT = new BinExpression(e3xleft, e4xright, e3, ConstantValues.GE, e4); :}
+	| EXPRADD:e4 					
+		{: RESULT = e4; :} 
+	;
+	
+EXPRADD ::= EXPRADD:e4 ADD EXPRMULT:e5 	
+			{: RESULT = new BinExpression(e4xleft, e5xright, e4, ConstantValues.ADD, e5); :}
+	| EXPRADD:e4 SUBS EXPRMULT:e5		
+		{: RESULT = new BinExpression(e4xleft, e5xright, e4, ConstantValues.SUBS, e5); :}
+	| EXPRMULT:e5 					
+		{: RESULT = e5; :}
+	;
+	
+EXPRMULT ::= EXPRMULT:e5 MULT EXPRUNARY:e6 	
+				{: RESULT = new BinExpression(e5xleft, e6xright, e5, ConstantValues.MULT, e6); :}
+	| EXPRMULT:e5 DIV EXPRUNARY:e6 		
+		{: RESULT = new BinExpression(e5xleft, e6xright, e5, ConstantValues.DIV, e6); :}
+	| EXPRMULT:e5 MOD EXPRUNARY:e6 		
+		{: RESULT = new BinExpression(e5xleft, e6xright, e5, ConstantValues.MOD, e6); :}
+	| EXPRUNARY:e6 					
+		{: RESULT = e6; :}
+	;
+	
+EXPRUNARY ::= ADD EXPRUNARY:e6 					
+		{: RESULT = new UnaryExpression(e6xleft, e6xright, e6, ConstantValues.ADD); :}
+	| SUBS EXPRUNARY:e6					
+		{: RESULT = new UnaryExpression(e6xleft, e6xright, e6, ConstantValues.SUBS); :}
+	| NEG EXPRUNARY:e6					
+		{: RESULT = new UnaryExpression(e6xleft, e6xright, e6, ConstantValues.NEG); :}
+	| EXPRLAST:e7				
+		{: RESULT = e7; :}
+	;
+	
+EXPRLAST ::= OPENPAR EXPR:e0 CLOSEPAR 		{: RESULT = e0; :}
+	| ID:i									{: RESULT = i; :}
+	| INT:i									{: RESULT = new IntegerValue(ixleft, ixright, i); :}	
+	| DOUBLE:d								{: RESULT = new DoubleValue(dxleft, dxright, d); :} 
+	| BOOLVAL:b 							{: RESULT = new BoolValue(bxleft, bxright, b);; :}
+	| CHAR:c								{: RESULT = new CharValue(cxleft, cxright, c); :}
+	| STRING:s 								{: RESULT = new StringValue(sxleft, sxright, s); :}
+	| ATTRIBOBJ:e							{: RESULT = e; :}							
+	| METHOBJ:e 							{: RESULT = e; :}							
+	| ARRAYELEM:e							{: RESULT = e; :}
+	;
+
+ID ::= IDENTIFIER:i 						{:RESULT = new Identifier(ixleft, ixright, i);:}
+	;
+	
+CLASSNAME ::= CLASSNAMESTR:cn 				{:RESULT = new Identifier(cnxleft, cnxright, cn);:}
+	;

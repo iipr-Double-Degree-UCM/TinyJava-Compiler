@@ -1,0 +1,61 @@
+/*class Clase1 {
+
+public int a;
+private char b;
+
+public Clase1(int num, char car) {
+a = num;
+b = car;
+}
+
+public int getA(){
+return a;
+}
+
+public void setB(char valor) {
+b = valor;
+}
+
+}*/
+
+
+main {
+int aa = 0;
+//Clase1 c1 = new Clase1(5, 'd');
+/*while jo < 10 {
+	jo = jo+1;
+	while jo < 3 {
+		if jo == 2 {
+			int jam = 23;
+		}
+	}
+}*/
+
+/*for(aa = 0; aa < 10; aa = aa + 1) {
+int asasasa = 1919;
+}*/
+
+int val = 1;
+/*if val == 3 {
+int j = 2;
+if val == 3 {
+int h = 2;
+} else {
+int h = 4;
+}
+} else {
+int as = 19;
+}*/
+
+switch(val) {
+case 0 {
+int hahah = 24;
+}
+case 1 {
+int aks = 25;
+}
+case 2 {
+int aks = 26;
+}
+}
+}

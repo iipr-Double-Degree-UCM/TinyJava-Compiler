@@ -1,0 +1,48 @@
+class Clase1 {
+
+public int a;
+private char b;
+
+public Clase1(int num, char car) {
+a = num;
+b = car;
+}
+
+public int getA(){
+return a;
+}
+
+public void setB(char valor) {
+b = valor;
+}
+
+}
+
+
+main {
+Clase1 c1 = new Clase1(3, 'a');
+int aa = c1.getA();
+//for(aa = 0; aa < 10; aa = aa + 1) {
+//int asasasa;
+//}
+//String asas = 2433;
+/*switch(aa) {
+case 1 {
+int hahah;
+}
+case 33 {
+int aks;
+}
+}*/
+while(0 != 4){
+char asdd = 's';
+}
+int[] f = new int[10];
+//f[2] = 2.2;
+int jota = 3;
+double doble = 3.0;
+bool bol = true;
+if(jota == 2) && !bol {
+jota = 4;
+}
+}
