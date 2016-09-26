@@ -1,0 +1,109 @@
+class MyClass {
+
+    public int num;
+    private char car;
+    private bool bol;
+
+    public MyClass(int n, char c, bool b) {
+        num = n;
+        car = c;
+        bol = b;
+    }
+
+    public int getNum(){
+        return num;
+    }
+
+    public void setBol(bool val) {
+        bol = val;
+    }
+
+}
+
+
+main {
+    
+    // (1) Lexical error:
+    //int i?;
+    
+    // (2) Syntax error:
+    /*switch a {
+    case 0
+        int a = 0;
+    }*/
+    
+    
+    // IDs AND TYPE ERRORS:
+    
+    
+    // (3) Variable already declared:
+    //int a;
+    //char a;
+    
+    // (4) Variable not initialized:
+    //int a;
+    //int b = a;
+    
+    // (5) ID not declared:
+    //int b = a;
+    
+    // (6) Array not declared
+    //int b = 3;
+    //a[2] = b;
+    
+    // (7) Not an array
+    //int b;
+    //b[2] = 3;
+    
+    // (8) Object not instantiated:
+    //obj.getA();
+    
+    // (9) Not an attribute
+    //MyClass c = new MyClass(1, 'a', true);
+    //int a = 2;
+    //c.n = a;
+    
+    // (10) Private attribute
+    //MyClass c = new MyClass(1, 'a', true);
+    //char a = 'a';
+    //c.car = a;
+    
+    // (11) Private method
+    MyClass c = new MyClass(1, 'a', true);
+    c.setBol(7*2);
+    
+    // (12) Too many/few parameters
+    //MyClass c = new MyClass(1, 'a', true, 3.3);
+    
+    // (13) Parameter type error
+    //MyClass c = new MyClass(1.2, 'a', true);
+    
+    // (14) Switch labels
+    /*int value = 2;
+    switch(value) {
+        case 0 {
+            bool a1 = false;
+        } case 2 {
+            char a1 = 'z';
+        } case 3 {
+            double a1 = 3.33;
+        }
+    }*/
+    
+    // (15) Non-compatible types
+    //int integer;
+    //integer = 1.0;
+    
+    // (16) Non-compatible types
+    //int integer = 1;
+    //double doub = 1.0;
+    //doub = integer + doub;
+    
+    // (17) Bool expected
+    /*if 5 {
+        int a = 0;
+    }*/
+    
+    int variable = 0;
+    
+}
